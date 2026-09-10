@@ -62,7 +62,7 @@ diorama-stickerbook/
 │   │   ├── bg-glasshouse.jpg                    # 1200x896 빈 온실 배경
 │   │   ├── example-scene.jpg                    # 1200x896 1단계 완성 마스터 씬
 │   │   ├── sticker-sheet.jpg                    # 원본 스티커 시트
-│   │   └── stickers/                            # 18종 투명 PNG 스티커
+│   │   └── stickers/                            # 팔레트 등록 16종, 투명 PNG 원본 18개
 │   │       ├── furniture-workbench.png          # 분갈이 작업대 (288x315)
 │   │       ├── furniture-plantshelf.png         # 3단 플랜트 선반 (212x298)
 │   │       ├── furniture-wicker-armchair.png    # 라탄 암체어 (257x302)
