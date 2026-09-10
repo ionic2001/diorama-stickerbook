@@ -18,6 +18,7 @@ interface DioramaCanvasProps {
   onSelectSticker: (instanceId: string | null) => void;
   onUpdateStickerTransform: (instanceId: string, updates: Partial<PlacedSticker>) => void;
   onCommitStickerTransform: () => void;
+  onDiscreteTransform: (instanceId: string, updates: Partial<PlacedSticker>) => void;
   onBringToFront: (instanceId: string) => void;
   onBringForward: (instanceId: string) => void;
   onSendBackward: (instanceId: string) => void;
@@ -45,6 +46,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   onSelectSticker,
   onUpdateStickerTransform,
   onCommitStickerTransform,
+  onDiscreteTransform,
   onBringToFront,
   onBringForward,
   onSendBackward,
@@ -67,7 +69,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
       if (clientWidth <= 0 || clientHeight <= 0) return;
 
       const scaleX = clientWidth / CANVAS_WIDTH;
-      const scaleY = clientHeight / CANVAS_HEIGHT;
+      const scaleY = Math.max(1, clientHeight - (!isViewMode && selectedInstanceId ? 128 : 0)) / CANVAS_HEIGHT;
       const computedScale = Math.min(scaleX, scaleY);
       setScale(computedScale);
     };
@@ -83,7 +85,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
       observer.disconnect();
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [selectedInstanceId, isViewMode]);
 
   const assetMap = new Map<string, Asset>((assets || RAINY_NIGHT_CAFE_ASSETS).map((a) => [a.assetId, a]));
 
@@ -123,7 +125,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   };
 
   return (
-    <div
+    <div className="diorama-canvas-viewport"
       ref={containerRef}
       style={{
         position: 'relative',
@@ -135,6 +137,7 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
         backgroundColor: '#0c0a09',
         overflow: 'hidden',
         userSelect: 'none',
+        paddingBottom: !isViewMode && selectedInstanceId ? 128 : 0,
       }}
       onClick={handleCanvasClick}
       onDragOver={handleDragOver}
@@ -209,13 +212,13 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
           <GuideOverlay width={CANVAS_WIDTH} height={CANVAS_HEIGHT} />
         )}
 
-        {/* 5. 선택된 스티커 직속 컨텍스트 툴바 (레이어 제어 등) */}
+      </div>
+        {/* 편집 도구는 작품의 확대·회전·클리핑 영역 밖에 표시한다. */}
         {!isViewMode && selectedSticker && selectedAsset && (
           <StickerContextToolbar
             sticker={selectedSticker}
-            stickerHeight={selectedAsset.dimensions.height}
-            canvasWidth={CANVAS_WIDTH}
-            canvasHeight={CANVAS_HEIGHT}
+            onRotate={(delta) => onDiscreteTransform(selectedSticker.instanceId, { rotation: ((selectedSticker.rotation + delta + 540) % 360) - 180 })}
+            onScale={(value) => onDiscreteTransform(selectedSticker.instanceId, { scale: value })}
             onBringToFront={() => onBringToFront(selectedSticker.instanceId)}
             onBringForward={() => onBringForward(selectedSticker.instanceId)}
             onSendBackward={() => onSendBackward(selectedSticker.instanceId)}
@@ -226,7 +229,6 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
             onDelete={() => onDelete(selectedSticker.instanceId)}
           />
         )}
-      </div>
     </div>
   );
 };

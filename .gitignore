@@ -5,3 +5,6 @@ dist/
 .env.*
 !.env.example
 .DS_Store
+
+# Duplicate inspection copy; tools-borderless.png is the final asset.
+public/assets/diorama/glasshouse-workbench-pilot/tools-borderless-v3.png

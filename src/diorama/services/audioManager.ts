@@ -1,27 +1,31 @@
-// Web Audio API 기반 잔잔한 심야 카페 로파이 재즈 BGM 및 인터랙션 사운드 엔진
+export type MusicTrackId = 'window-afternoon' | 'greenhouse-morning' | 'cozy-night';
+
+// 외부 음원 없이 동작하는 Web Audio 기반 배경음 및 인터랙션 사운드 엔진
 class AudioManager {
   private ctx: AudioContext | null = null;
   private masterGainNode: GainNode | null = null;
   private jazzMasterGain: GainNode | null = null;
-  private isMuted: boolean = false;
+  private isMuted: boolean = true;
+  private playRequest = 0;
   private volume: number = 0.5;
   private isJazzPlaying: boolean = false;
+  private currentTrack: MusicTrackId = 'window-afternoon';
 
   // 재즈 시퀀서 타이머 및 노드
   private beatTimer: ReturnType<typeof setTimeout> | null = null;
   private currentBar: number = 0;
   private currentBeat: number = 0;
 
-  private initContext() {
+  private async initContext() {
     if (!this.ctx) {
       const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtxClass();
       this.masterGainNode = this.ctx.createGain();
-      this.masterGainNode.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      this.masterGainNode.gain.setValueAtTime(this.isMuted ? 0 : this.volume, this.ctx.currentTime);
       this.masterGainNode.connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      await this.ctx.resume();
     }
   }
 
@@ -138,6 +142,12 @@ class AudioManager {
   // Bar 2: Dm9 (D, A, C, F, E)
   // Bar 3: Cmaj9 (C, G, B, D, E)
   private playJazzBar(barIndex: number, time: number) {
+    const trackSettings: Record<MusicTrackId, { transpose: number; chordVelocity: number }> = {
+      'window-afternoon': { transpose: 0, chordVelocity: 0.11 },
+      'greenhouse-morning': { transpose: 5, chordVelocity: 0.085 },
+      'cozy-night': { transpose: -3, chordVelocity: 0.075 },
+    };
+    const settings = trackSettings[this.currentTrack];
     const chords = [
       { bass: 41 /* F2 */, chord: [53, 60, 64, 67, 69] /* F3, C4, E4, G4, A4 */ },
       { bass: 40 /* E2 */, chord: [52, 59, 62, 67, 71] /* E3, B3, D4, G4, B4 */ },
@@ -145,14 +155,18 @@ class AudioManager {
       { bass: 36 /* C2 */, chord: [48, 55, 59, 62, 64] /* C3, G3, B3, D4, E4 */ },
     ];
 
-    const current = chords[barIndex % 4];
+    const base = chords[barIndex % 4];
+    const current = {
+      bass: base.bass + settings.transpose,
+      chord: base.chord.map((note) => note + settings.transpose),
+    };
     // 1. 베이스 (1박)
     this.playBassNote(current.bass, time, 0.2);
 
     // 2. 피아노 코드 스트럼 (약간의 아르페지오 딜레이로 사람 손 느낌 부여)
     current.chord.forEach((note, idx) => {
       const strumTime = time + idx * 0.028;
-      this.playRhodesNote(note, strumTime, 3.8, 0.11 - idx * 0.008);
+      this.playRhodesNote(note, strumTime, 3.8, settings.chordVelocity - idx * 0.006);
     });
 
     // 3. 2박째의 텐션 싱코페이션 아르페지오 (2박과 3박 사이에 부드럽게 한 음 첨가)
@@ -168,9 +182,16 @@ class AudioManager {
 
   // 재즈 BGM 재생 시작
   public startJazz() {
-    if (this.isJazzPlaying) return;
-    this.initContext();
-    if (!this.ctx || !this.masterGainNode) return;
+    this.startTrack(this.currentTrack);
+  }
+
+  public async startTrack(trackId: MusicTrackId): Promise<boolean> {
+    if (this.isMuted) return false;
+    if (this.isJazzPlaying) return true;
+    const request = ++this.playRequest;
+    this.currentTrack = trackId;
+    await this.initContext();
+    if (request !== this.playRequest || this.isMuted || !this.ctx || !this.masterGainNode || this.ctx.state !== 'running') return false;
 
     this.jazzMasterGain = this.ctx.createGain();
     this.jazzMasterGain.gain.setValueAtTime(0.7, this.ctx.currentTime);
@@ -205,9 +226,23 @@ class AudioManager {
     };
 
     scheduleLoop();
+    return true;
+  }
+
+  public selectTrack(trackId: MusicTrackId) {
+    if (trackId === this.currentTrack) return;
+    const wasPlaying = this.isJazzPlaying;
+    this.stopJazz();
+    this.currentTrack = trackId;
+    if (wasPlaying && !this.isMuted) void this.startTrack(trackId).catch(() => this.stopJazz());
+  }
+
+  public getCurrentTrack(): MusicTrackId {
+    return this.currentTrack;
   }
 
   public stopJazz() {
+    this.playRequest++;
     if (this.beatTimer) {
       clearTimeout(this.beatTimer);
       this.beatTimer = null;
@@ -226,8 +261,10 @@ class AudioManager {
   }
 
   // 램프 스위치 클릭 효과음
-  public playLampSwitch(turnOn: boolean) {
-    this.initContext();
+  public async playLampSwitch(turnOn: boolean) {
+    if (this.isMuted) return;
+    try { await this.initContext(); } catch { return; }
+    if (this.isMuted) return;
     if (!this.ctx || !this.masterGainNode) return;
 
     const osc = this.ctx.createOscillator();
@@ -249,8 +286,10 @@ class AudioManager {
   }
 
   // 스티커 부착 효과음 (부드러운 종이 탭)
-  public playStickerPop() {
-    this.initContext();
+  public async playStickerPop() {
+    if (this.isMuted) return;
+    try { await this.initContext(); } catch { return; }
+    if (this.isMuted) return;
     if (!this.ctx || !this.masterGainNode) return;
 
     const osc = this.ctx.createOscillator();

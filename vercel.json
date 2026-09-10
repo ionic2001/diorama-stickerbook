@@ -1,5 +1,5 @@
 {
-  "rewrites": [
-    { "source": "/stickerbook", "destination": "/" }
+  "redirects": [
+    { "source": "/stickerbook", "destination": "/studio/", "permanent": true }
   ]
 }

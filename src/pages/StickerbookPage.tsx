@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { RAINY_NIGHT_CAFE_MANIFEST } from '../diorama/content/rainyNightCafeManifest';
 import { GLASSHOUSE_BOTANIST_MANIFEST } from '../diorama/content/glasshouseBotanistManifest';
+import { GLASSHOUSE_SHELF_PILOT } from '../diorama/content/glasshouseShelfPilot';
+import { GLASSHOUSE_WORKBENCH_PILOT } from '../diorama/content/glasshouseWorkbenchPilot';
+import { GLASSHOUSE_COMBINED_PILOT } from '../diorama/content/glasshouseCombinedPilot';
 import { PlacedSticker, Creation } from '../diorama/types/manifest';
 import { DioramaCanvas } from '../diorama/components/Canvas/DioramaCanvas';
 import { TopToolbar } from '../diorama/components/Toolbar/TopToolbar';
@@ -24,20 +27,37 @@ import {
   loadCreationFromStorage, 
   clearSavedCreationFromStorage 
 } from '../diorama/services/autosave';
-import { audioManager } from '../diorama/services/audioManager';
+import { audioManager, MusicTrackId } from '../diorama/services/audioManager';
+import { SoundPanel } from '../diorama/components/SoundPanel/SoundPanel';
 import { exportDioramaToPNG, downloadDataUrl } from '../diorama/domain/export';
 
-export const StickerbookPage: React.FC = () => {
-  const [currentThemeId, setCurrentThemeId] = useState<'glasshouse-botanist' | 'rainy-night-cafe'>('glasshouse-botanist');
-  const manifest = currentThemeId === 'glasshouse-botanist' ? GLASSHOUSE_BOTANIST_MANIFEST : RAINY_NIGHT_CAFE_MANIFEST;
+interface StickerbookPageProps {
+  shelfPilot?: boolean;
+  workbenchPilot?: boolean;
+  combinedPilot?: boolean;
+  initialThemeId?: 'glasshouse-botanist' | 'rainy-night-cafe';
+  locale?: 'ko' | 'en';
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  onExit?: () => void;
+}
+
+function readPreference(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId = 'glasshouse-botanist', locale = 'ko', difficulty = 'beginner', onExit, shelfPilot = false, workbenchPilot = false, combinedPilot = false }) => {
+  const greenhouseManifest = combinedPilot ? GLASSHOUSE_COMBINED_PILOT : workbenchPilot ? GLASSHOUSE_WORKBENCH_PILOT : shelfPilot ? GLASSHOUSE_SHELF_PILOT : GLASSHOUSE_BOTANIST_MANIFEST;
+  const initialManifest = initialThemeId === 'glasshouse-botanist' ? greenhouseManifest : RAINY_NIGHT_CAFE_MANIFEST;
+  const [currentThemeId, setCurrentThemeId] = useState<'glasshouse-botanist' | 'rainy-night-cafe'>(initialThemeId);
+  const manifest = currentThemeId === 'glasshouse-botanist' ? greenhouseManifest : RAINY_NIGHT_CAFE_MANIFEST;
 
   const [stickers, setStickers] = useState<PlacedSticker[]>(() => {
-    const loaded = loadCreationFromStorage(GLASSHOUSE_BOTANIST_MANIFEST.setId);
-    return loaded?.stickers || GLASSHOUSE_BOTANIST_MANIFEST.defaultCreation.stickers;
+    const loaded = loadCreationFromStorage(initialManifest.setId);
+    return loaded?.stickers || initialManifest.defaultCreation.stickers;
   });
   const [lampOn, setLampOn] = useState<boolean>(() => {
-    const loaded = loadCreationFromStorage(GLASSHOUSE_BOTANIST_MANIFEST.setId);
-    return loaded?.sceneState?.lampOn ?? GLASSHOUSE_BOTANIST_MANIFEST.defaultCreation.sceneState.lampOn;
+    const loaded = loadCreationFromStorage(initialManifest.setId);
+    return loaded?.sceneState?.lampOn ?? initialManifest.defaultCreation.sceneState.lampOn;
   });
   const [history, setHistory] = useState<HistoryState>(() => createHistory(stickers));
 
@@ -46,8 +66,16 @@ export const StickerbookPage: React.FC = () => {
   const [isGuideEnabled, setIsGuideEnabled] = useState<boolean>(false);
   const [isTrayOpen, setIsTrayOpen] = useState<boolean>(true);
 
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-  const [volume, setVolume] = useState<number>(0.4);
+  const [isMuted, setIsMuted] = useState<boolean>(() => readPreference('diorama:sound-muted') !== 'false');
+  const [volume, setVolume] = useState<number>(() => { const v = Number(readPreference('diorama:music-volume') ?? 0.4); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.4; });
+  const [selectedTrack, setSelectedTrack] = useState<MusicTrackId | null>(() => {
+    const savedTrack = readPreference('diorama:music-track');
+    if (savedTrack === 'none') return null;
+    return ['window-afternoon', 'greenhouse-morning', 'cozy-night'].includes(savedTrack || '') ? savedTrack as MusicTrackId : initialThemeId === 'glasshouse-botanist' ? 'greenhouse-morning' : 'window-afternoon';
+  });
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [audioError, setAudioError] = useState('');
+  const [isSoundPanelOpen, setIsSoundPanelOpen] = useState(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,11 +96,19 @@ export const StickerbookPage: React.FC = () => {
     saveCreationToStorage(manifest.setId, creationToSave);
   }, [lampOn, manifest, stickers]);
 
+  const latestSave = useRef(persistCurrentCreation);
+  latestSave.current = persistCurrentCreation;
+  useEffect(() => {
+    const flush = () => latestSave.current();
+    window.addEventListener('pagehide', flush);
+    return () => { window.removeEventListener('pagehide', flush); flush(); };
+  }, []);
+
   const handleSelectTheme = (themeId: string) => {
     if (themeId === currentThemeId) return;
     persistCurrentCreation();
     const nextTheme = themeId as 'glasshouse-botanist' | 'rainy-night-cafe';
-    const nextManifest = nextTheme === 'glasshouse-botanist' ? GLASSHOUSE_BOTANIST_MANIFEST : RAINY_NIGHT_CAFE_MANIFEST;
+    const nextManifest = nextTheme === 'glasshouse-botanist' ? greenhouseManifest : RAINY_NIGHT_CAFE_MANIFEST;
     const saved = loadCreationFromStorage(nextManifest.setId);
     const nextStickers = saved?.stickers || nextManifest.defaultCreation.stickers;
     const nextLamp = saved?.sceneState?.lampOn ?? nextManifest.defaultCreation.sceneState.lampOn;
@@ -97,42 +133,27 @@ export const StickerbookPage: React.FC = () => {
     };
   }, [persistCurrentCreation]);
 
-  // 2. 잔잔한 재즈 BGM 사운드 라이프사이클 관리
+  // 2. 배경음은 사용자가 재생한 뒤에만 시작한다. 설정은 이 기기에만 저장한다.
   useEffect(() => {
     audioManager.setVolume(volume);
     audioManager.setMuted(isMuted);
+    try {
+      localStorage.setItem('diorama:sound-muted', String(isMuted));
+      localStorage.setItem('diorama:music-volume', String(volume));
+      localStorage.setItem('diorama:music-track', selectedTrack || 'none');
+    } catch { /* Playback remains available when browser storage is blocked. */ }
+  }, [isMuted, volume, selectedTrack]);
 
-    const startAudioOnFirstInteraction = () => {
-      if (!isMuted) {
-        audioManager.startJazz();
-      }
-      window.removeEventListener('pointerdown', startAudioOnFirstInteraction);
-      window.removeEventListener('keydown', startAudioOnFirstInteraction);
-    };
-
-    window.addEventListener('pointerdown', startAudioOnFirstInteraction);
-    window.addEventListener('keydown', startAudioOnFirstInteraction);
-
-    if (!isMuted) {
-      audioManager.startJazz();
-    }
-
-    return () => {
-      window.removeEventListener('pointerdown', startAudioOnFirstInteraction);
-      window.removeEventListener('keydown', startAudioOnFirstInteraction);
-      audioManager.stopJazz();
-    };
-  }, [isMuted, volume]);
+  useEffect(() => {
+    const pauseHidden = () => { if (document.hidden) { audioManager.stopJazz(); setIsAudioPlaying(false); } };
+    document.addEventListener('visibilitychange', pauseHidden);
+    return () => { document.removeEventListener('visibilitychange', pauseHidden); audioManager.stopJazz(); };
+  }, []);
 
   // 볼륨 변경 핸들러
   const handleChangeVolume = (newVol: number) => {
     setVolume(newVol);
     audioManager.setVolume(newVol);
-    if (isMuted && newVol > 0) {
-      setIsMuted(false);
-      audioManager.setMuted(false);
-      audioManager.startJazz();
-    }
   };
 
   // 음소거 토글
@@ -140,10 +161,47 @@ export const StickerbookPage: React.FC = () => {
     const nextMuted = !isMuted;
     setIsMuted(nextMuted);
     audioManager.setMuted(nextMuted);
-    if (!nextMuted) {
-      audioManager.startJazz();
-    } else {
+    if (nextMuted) {
       audioManager.stopJazz();
+      setIsAudioPlaying(false);
+    }
+  };
+
+  const handleSelectTrack = (trackId: MusicTrackId | null) => {
+    setSelectedTrack(trackId);
+    audioManager.stopJazz();
+    setIsAudioPlaying(false);
+    if (!trackId) {
+      setIsAudioPlaying(false);
+      return;
+    }
+    audioManager.selectTrack(trackId);
+  };
+
+  const handlePlayTrack = async (trackId: MusicTrackId) => {
+    setAudioError('');
+    audioManager.stopJazz();
+    setSelectedTrack(trackId);
+    setIsMuted(false);
+    audioManager.setVolume(volume);
+    audioManager.setMuted(false);
+    try {
+      const started = await audioManager.startTrack(trackId);
+      setIsAudioPlaying(started);
+      if (!started && !document.hidden) setAudioError('재생 버튼을 다시 눌러 주세요.');
+    } catch {
+      setIsAudioPlaying(false);
+      setAudioError(locale === 'ko' ? '소리를 재생할 수 없습니다. 브라우저 소리 권한을 확인한 뒤 다시 눌러 주세요.' : 'Audio could not start. Check browser sound permissions and try again.');
+    }
+  };
+
+  const handleTogglePlaying = () => {
+    if (!selectedTrack) return;
+    if (isAudioPlaying) {
+      audioManager.stopJazz();
+      setIsAudioPlaying(false);
+    } else {
+      void handlePlayTrack(selectedTrack);
     }
   };
 
@@ -297,7 +355,7 @@ export const StickerbookPage: React.FC = () => {
   const handleExportPNG = async () => {
     try {
       setIsExporting(true);
-      const dataUrl = await exportDioramaToPNG(stickers, manifest.backgroundSrc);
+      const dataUrl = await exportDioramaToPNG(stickers, manifest.backgroundSrc, 2048, 1536, manifest.canvas.width, manifest.canvas.height, manifest.assets);
       downloadDataUrl(dataUrl, `${manifest.setId}-diorama-${Date.now()}.png`);
     } catch (err) {
       console.error('Failed to export diorama PNG:', err);
@@ -339,20 +397,12 @@ export const StickerbookPage: React.FC = () => {
   }, [handleUndo, handleRedo, selectedInstanceId, stickers]);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: '#0c0a09',
-        overflow: 'hidden',
-        color: '#f3f4f6',
-      }}
-    >
+    <div className="studio-shell">
+      <div className="studio-service-bar"><button onClick={onExit}>← {locale === 'ko' ? '테마로' : 'Themes'}</button><span>{locale === 'ko' ? ({ beginner: '초급', intermediate: '중급', advanced: '고급' }[difficulty]) : difficulty}</span><small>{locale === 'ko' ? '작품은 이 기기에 저장됩니다' : 'Saved on this device'}</small></div>
       {/* 1. 상단 글로벌 툴바 */}
       <TopToolbar
-        title={manifest.title.ko}
+        title={manifest.title[locale]}
+        locale={locale}
         currentThemeId={currentThemeId}
         onSelectTheme={handleSelectTheme}
         isViewMode={isViewMode}
@@ -371,12 +421,13 @@ export const StickerbookPage: React.FC = () => {
         onRedo={handleRedo}
         onResetScene={handleResetScene}
         onToggleMute={handleToggleMute}
+        onOpenSound={() => setIsSoundPanelOpen(true)}
         onChangeVolume={handleChangeVolume}
         onExportPNG={handleExportPNG}
       />
 
       {/* 2. 메인 워크스페이스: 캔버스 + 스티커 트레이 (가로 랜드스케이프 레이아웃) */}
-      <div
+      <div className="studio-workspace"
         style={{
           display: 'flex',
           flex: 1,
@@ -399,6 +450,7 @@ export const StickerbookPage: React.FC = () => {
             onSelectSticker={setSelectedInstanceId}
             onUpdateStickerTransform={handleUpdateStickerTransform}
             onCommitStickerTransform={handleCommitStickerTransform}
+            onDiscreteTransform={(id, updates) => { const updated = stickers.map(s => s.instanceId === id ? { ...s, ...updates } : s); setStickers(updated); setHistory(prev => recordAction(prev, updated)); }}
             onBringToFront={handleBringToFront}
             onBringForward={handleBringForward}
             onSendBackward={handleSendBackward}
@@ -415,12 +467,14 @@ export const StickerbookPage: React.FC = () => {
         {/* 편집 모드에서만 표시되는 우측 스티커 트레이 */}
         {!isViewMode && (
           <StickerTray
+            locale={locale}
             isOpen={isTrayOpen}
             assets={manifest.assets}
             onToggleOpen={() => setIsTrayOpen((prev) => !prev)}
             onAddSticker={(assetId) => handleAddSticker(assetId)}
           />
         )}
+        <SoundPanel open={isSoundPanelOpen} locale={locale} muted={isMuted} playing={isAudioPlaying} volume={volume} selectedTrack={selectedTrack} onClose={() => setIsSoundPanelOpen(false)} onToggleMute={handleToggleMute} onTogglePlaying={handleTogglePlaying} onChangeVolume={handleChangeVolume} onSelectTrack={handleSelectTrack} onPlayTrack={handlePlayTrack} themeId={currentThemeId} error={audioError} />
       </div>
     </div>
   );

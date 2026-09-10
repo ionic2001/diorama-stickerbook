@@ -1,0 +1,40 @@
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs/promises');
+(async()=>{
+ const browser=await chromium.launch({headless:true,channel:'chrome'});
+ try {
+  const context=await browser.newContext({viewport:{width:1280,height:850},acceptDownloads:true});
+  const page=await context.newPage(); const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('http://127.0.0.1:5174/themes/');
+  const keys=['qk-diorama-saved-glasshouse-botanist','qk-diorama-saved-glasshouse-shelf-intermediate-pilot-v1'];
+  await page.evaluate(keys=>keys.forEach(key=>localStorage.setItem(key,'legacy-preservation-sentinel')),keys);
+  await page.goto('http://127.0.0.1:5174/studio/?set=glasshouse-botanist&pilot=workbench');
+  await page.waitForSelector('[data-sticker-id="workbench-default-4"]');
+  await page.evaluate(()=>Promise.all([...document.images].map(img=>img.decode())));
+  assert.equal(await page.locator('[data-sticker-id]').count(),5);
+  await fs.mkdir('workbench-assets-v1/qa',{recursive:true});
+  await page.screenshot({path:'workbench-assets-v1/qa/studio.png'});
+  const tool=page.locator('[data-sticker-id="workbench-default-4"]');
+  const box=await tool.boundingBox();
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+  await page.mouse.move(box.x+box.width/2+70,box.y+box.height/2+20,{steps:8});await page.mouse.up();
+  await page.getByRole('button',{name:'오른쪽으로 15도 회전'}).click();
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('qk-diorama-saved-glasshouse-workbench-intermediate-pilot-v1')||'null')?.stickers.find(s=>s.instanceId==='workbench-default-4')?.rotation===15);
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('qk-diorama-saved-glasshouse-workbench-intermediate-pilot-v1')));
+  assert(saved.stickers.find(s=>s.instanceId==='workbench-default-4').x>437);
+  await page.reload();await page.waitForSelector('[data-sticker-id="workbench-default-4"]');
+  assert.match(await tool.getAttribute('style'),/rotate\(15deg\)/);
+  assert.deepEqual(await page.evaluate(keys=>keys.map(key=>localStorage.getItem(key)),keys),keys.map(()=>'legacy-preservation-sentinel'));
+  const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'PNG 저장',exact:true}).click();
+  const download=await downloadPromise; await download.saveAs('workbench-assets-v1/qa/export.png');assert.equal(await download.failure(),null);
+  await page.setViewportSize({width:390,height:844});await page.reload();await page.waitForSelector('[data-sticker-id="workbench-default-4"]');
+  await tool.click();const rotate=page.getByRole('button',{name:'오른쪽으로 15도 회전'});await rotate.click();
+  const rb=await rotate.boundingBox();assert(rb.x>=0&&rb.x+rb.width<=390&&rb.y+rb.height<=844);
+  await page.screenshot({path:'workbench-assets-v1/qa/mobile.png'});
+  await page.goto('http://127.0.0.1:5174/en/studio/?set=glasshouse-botanist&pilot=workbench');
+  await page.getByText('Potting workbench · 5-piece pilot',{exact:true}).waitFor();
+  assert.deepEqual(errors,[]);
+  console.log('PASS workbench: 5 parts, drag, rotation, autosave/reload, legacy isolation, PNG, mobile controls, English entry');
+ } finally {await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});
