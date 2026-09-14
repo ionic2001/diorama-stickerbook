@@ -1,5 +1,9 @@
 # Diorama Stickerbook
 
+> 다음 작업은 [최신 재개 노트](docs/project/NEXT_SESSION_2026-09-14.md)를 먼저 확인한다. 최신 27종은 URL에 `pilot=first11`이 있어야 한다.
+
+> 최신: 원예 소품 8개 추가로 총 27개. 최소 75개까지 48개 남음. [원예 소품 제작·검증 기록](docs/project/GLASSHOUSE_GARDENING_BATCH.md). 기존 first11 주소와 저장 ID 유지. 아래 19종/11종은 이전 단계 기록.
+
 > 최신 시제품: `/studio/?set=glasshouse-botanist&pilot=first11`에서 기존 11개와 일체형 식물 8개, 총 19개를 확인한다. 주소는 저장 호환을 위해 유지한다. [추가 제작 기록](docs/project/GLASSHOUSE_PLANTS_BATCH.md).
 
 > 콘텐츠 제작 검토안: [온실 첫 세트 구성·성능 기획서](docs/project/GLASSHOUSE_75_PLUS_PLAN.md) — 최소 75개 보장, 80개 구성 제안, 실제 기기 성능 검증 후 최종 수량 확정.
