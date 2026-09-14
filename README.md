@@ -1,5 +1,7 @@
 # Diorama Stickerbook
 
+> 최신 시제품: `/studio/?set=glasshouse-botanist&pilot=first11`에서 기존 11개와 일체형 식물 8개, 총 19개를 확인한다. 주소는 저장 호환을 위해 유지한다. [추가 제작 기록](docs/project/GLASSHOUSE_PLANTS_BATCH.md).
+
 > 콘텐츠 제작 검토안: [온실 첫 세트 구성·성능 기획서](docs/project/GLASSHOUSE_75_PLUS_PLAN.md) — 최소 75개 보장, 80개 구성 제안, 실제 기기 성능 검증 후 최종 수량 확정.
 
 > 대표 자산 시제품: `/studio/?set=glasshouse-botanist&pilot=first11` — 화분+몬스테라를 일체형 한 항목으로 포함한 11개 서비스용 자산. 정식 75개 세트는 아니다.

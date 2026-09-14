@@ -1,5 +1,6 @@
 import { GLASSHOUSE_BOTANIST_MANIFEST } from './glasshouseBotanistManifest';
 import type { Asset, ContentSet } from '../types/manifest';
+import { greenhousePlantAssets } from './glasshousePlantAssets';
 
 const setId = 'glasshouse-first11-pilot-v1';
 const assetRoot = '/assets/diorama/glasshouse-first12-v1/service/';
@@ -30,20 +31,22 @@ const assets: Asset[] = entries.map(([id, ko, en, width, height, x, y], index) =
   layer: { defaultZIndex: index + 1 },
 }));
 
+// Preserve the first11 save identity and existing asset IDs as the collection grows.
+const expandedAssets = [...assets, ...greenhousePlantAssets(setId)];
 export const GLASSHOUSE_FIRST11_PILOT: ContentSet = {
   ...GLASSHOUSE_BOTANIST_MANIFEST,
   setId,
-  version: 1,
+  version: 2,
   published: false,
   title: {
-    ko: '햇살 온실 · 대표 스티커 11종',
-    en: 'Sunlit Greenhouse · 11-piece pilot',
+    ko: '햇살 온실 · 스티커 19종 시제품',
+    en: 'Sunlit Greenhouse · 19-piece pilot',
     ja: 'Sunlit Greenhouse pilot',
     zh: 'Sunlit Greenhouse pilot',
     es: 'Sunlit Greenhouse pilot',
   },
-  assets,
-  assetIds: assets.map(asset => asset.assetId),
+  assets: expandedAssets,
+  assetIds: expandedAssets.map(asset => asset.assetId),
   defaultCreation: {
     sceneState: { lampOn: false },
     stickers: [],
