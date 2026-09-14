@@ -212,9 +212,6 @@ button:disabled { opacity:.48; cursor:not-allowed; }
 .sticker-drawer { display:flex; flex-direction:column; width:280px; flex-shrink:0; min-height:0; background:var(--paper); border-left:1px solid var(--line); }
 .sticker-drawer.closed { width:85px; }
 .drawer-toggle { display:flex; justify-content:space-between; padding:15px; min-height:46px; border:0; border-bottom:1px solid var(--line); background:var(--paper); cursor:pointer; }
-.drawer-categories { display:flex; gap:5px; overflow:auto; flex-shrink:0; padding:9px; }
-.drawer-categories button { border:0; border-radius:999px; background:#f0f1eb; white-space:nowrap; padding:8px 13px; cursor:pointer; font-size:12px; }
-.drawer-categories button.active { background:var(--sage); color:white; }
 .drawer-grid { display:grid; grid-template-columns:1fr 1fr; align-content:start; padding:10px; overflow:auto; gap:9px; }
 .drawer-grid button { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:0; min-height:110px; border:1px solid var(--line); border-radius:12px; background:white; padding:10px; gap:9px; cursor:grab; }
 .drawer-grid img { width:86px; height:67px; max-width:100%; object-fit:contain; }

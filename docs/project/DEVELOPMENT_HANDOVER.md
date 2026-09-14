@@ -103,7 +103,7 @@ diorama-stickerbook/
 │       │   ├── Toolbar/
 │       │   │   └── TopToolbar.tsx               # 상단바 (테마 전환 버튼: [🌿온실 | ☕카페], Undo/Redo, BGM)
 │       │   ├── Tray/
-│       │   │   └── StickerTray.tsx              # 우측 접이식 스티커 서랍 (카테고리 탭, 드래그/클릭)
+│       │   │   └── StickerTray.tsx              # 우측 접이식 스티커 서랍 (단일 목록, 드래그/클릭)
 │       │   └── ViewEffects/
 │       │       └── ViewEffectsOverlay.tsx       # 뷰 모드 특수효과 (카페 빗줄기 등)
 │       │

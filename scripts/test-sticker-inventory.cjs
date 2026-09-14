@@ -18,6 +18,8 @@ const base = process.env.TEST_BASE_URL || 'http://127.0.0.1:5174';
     await page.evaluate(() => localStorage.removeItem('qk-diorama-saved-glasshouse-botanist'));
     await page.reload();
     await page.waitForSelector('.drawer-grid button');
+    assert.equal(await page.locator('.drawer-categories').count(), 0);
+    assert.equal(await page.getByRole('button', { name: '가구', exact: true }).count(), 0);
     const initialCount = await page.locator('.drawer-grid button').count();
     assert(initialCount > 0);
     const first = page.locator('.drawer-grid button').first();
@@ -41,13 +43,13 @@ const base = process.env.TEST_BASE_URL || 'http://127.0.0.1:5174';
     await page.goto(base + '/studio/?set=glasshouse-botanist&pilot=combined');
     await page.evaluate(() => localStorage.removeItem('qk-diorama-saved-glasshouse-combined-intermediate-pilot-v1'));
     await page.reload();
-    await page.getByText('이 목록의 스티커를 모두 사용했어요. 작품에서 삭제하면 다시 나타납니다.', { exact: true }).waitFor();
+    await page.getByText('모든 스티커를 사용했어요. 작품에서 삭제하면 다시 나타납니다.', { exact: true }).waitFor();
     assert.equal(await page.locator('[data-sticker-id]').count(), 9);
 
     await page.goto(base + '/en/studio/?set=glasshouse-botanist&pilot=combined');
-    await page.getByText('You used every sticker in this list. Delete one from the scene to bring it back.', { exact: true }).waitFor();
+    await page.getByText('You used every sticker. Delete one from the scene to bring it back.', { exact: true }).waitFor();
     assert.deepEqual(errors, []);
-    console.log('PASS: no difficulty selector; used sticker hides, undo/delete restores, redo/reload hides, duplicate removed, empty states localized');
+    console.log('PASS: no difficulty or category selectors; used sticker hides, undo/delete restores, redo/reload hides, duplicate removed, empty states localized');
   } finally {
     await browser.close();
   }
