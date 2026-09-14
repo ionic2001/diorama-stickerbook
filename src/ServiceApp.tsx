@@ -65,7 +65,8 @@ export default function ServiceApp({ initialPath }: { initialPath?: string }) {
     const shelfPilot = theme === 'glasshouse-botanist' && query.get('pilot') === 'shelf';
     const workbenchPilot = theme === 'glasshouse-botanist' && query.get('pilot') === 'workbench';
     const combinedPilot = theme === 'glasshouse-botanist' && query.get('pilot') === 'combined';
-    return <StickerbookPage initialThemeId={theme} locale={locale} shelfPilot={shelfPilot} workbenchPilot={workbenchPilot} combinedPilot={combinedPilot} onExit={() => window.location.assign(href('themes'))} />;
+    const first11Pilot = theme === 'glasshouse-botanist' && query.get('pilot') === 'first11';
+    return <StickerbookPage initialThemeId={theme} locale={locale} shelfPilot={shelfPilot} workbenchPilot={workbenchPilot} combinedPilot={combinedPilot} first11Pilot={first11Pilot} onExit={() => window.location.assign(href('themes'))} />;
   }
 
   const article = page === 'how-to' || page === 'features' || page === 'about' ? articles[locale][page] : page === 'privacy' || page === 'terms' ? legalArticles[locale][page] : null;

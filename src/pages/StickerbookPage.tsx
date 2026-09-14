@@ -4,6 +4,7 @@ import { GLASSHOUSE_BOTANIST_MANIFEST } from '../diorama/content/glasshouseBotan
 import { GLASSHOUSE_SHELF_PILOT } from '../diorama/content/glasshouseShelfPilot';
 import { GLASSHOUSE_WORKBENCH_PILOT } from '../diorama/content/glasshouseWorkbenchPilot';
 import { GLASSHOUSE_COMBINED_PILOT } from '../diorama/content/glasshouseCombinedPilot';
+import { GLASSHOUSE_FIRST11_PILOT } from '../diorama/content/glasshouseFirst11Pilot';
 import { PlacedSticker, Creation } from '../diorama/types/manifest';
 import { DioramaCanvas } from '../diorama/components/Canvas/DioramaCanvas';
 import { TopToolbar } from '../diorama/components/Toolbar/TopToolbar';
@@ -35,6 +36,7 @@ interface StickerbookPageProps {
   shelfPilot?: boolean;
   workbenchPilot?: boolean;
   combinedPilot?: boolean;
+  first11Pilot?: boolean;
   initialThemeId?: 'glasshouse-botanist' | 'rainy-night-cafe';
   locale?: 'ko' | 'en';
   onExit?: () => void;
@@ -44,8 +46,8 @@ function readPreference(key: string): string | null {
   try { return localStorage.getItem(key); } catch { return null; }
 }
 
-export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId = 'glasshouse-botanist', locale = 'ko', onExit, shelfPilot = false, workbenchPilot = false, combinedPilot = false }) => {
-  const greenhouseManifest = combinedPilot ? GLASSHOUSE_COMBINED_PILOT : workbenchPilot ? GLASSHOUSE_WORKBENCH_PILOT : shelfPilot ? GLASSHOUSE_SHELF_PILOT : GLASSHOUSE_BOTANIST_MANIFEST;
+export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId = 'glasshouse-botanist', locale = 'ko', onExit, shelfPilot = false, workbenchPilot = false, combinedPilot = false, first11Pilot = false }) => {
+  const greenhouseManifest = first11Pilot ? GLASSHOUSE_FIRST11_PILOT : combinedPilot ? GLASSHOUSE_COMBINED_PILOT : workbenchPilot ? GLASSHOUSE_WORKBENCH_PILOT : shelfPilot ? GLASSHOUSE_SHELF_PILOT : GLASSHOUSE_BOTANIST_MANIFEST;
   const initialManifest = initialThemeId === 'glasshouse-botanist' ? greenhouseManifest : RAINY_NIGHT_CAFE_MANIFEST;
   const [currentThemeId, setCurrentThemeId] = useState<'glasshouse-botanist' | 'rainy-night-cafe'>(initialThemeId);
   const manifest = currentThemeId === 'glasshouse-botanist' ? greenhouseManifest : RAINY_NIGHT_CAFE_MANIFEST;
