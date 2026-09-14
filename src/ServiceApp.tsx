@@ -7,7 +7,6 @@ import AdPlacement from './AdPlacement';
 import { articles, pageMeta, pagePath, parsePath, Page, publicPages } from './pageContent';
 import { legalArticles } from './legalContent';
 type ThemeId = 'glasshouse-botanist' | 'rainy-night-cafe';
-type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 
 const copy = {
   ko: {
@@ -16,7 +15,7 @@ const copy = {
     title: '오늘의 기분을\n작은 공간에.',
     intro: '섬세한 스티커를 고르고, 천천히 배치하며 나만의 장면을 완성해 보세요. 가입 없이 바로 시작할 수 있어요.',
     start: '꾸미기 시작', explore: '테마 둘러보기', themesTitle: '어떤 공간에 머물까요?',
-    themesIntro: '오늘은 온실과 카페에서 시작해 보세요. 새 공간과 난이도별 스티커는 준비 중입니다.',
+    themesIntro: '오늘은 온실과 카페에서 시작해 보세요. 새 공간과 75개 이상의 상세 스티커 세트를 준비하고 있습니다.',
     method: '처음이어도 가볍게', features: '작은 몰입을 위한 기능', about: '우리가 만드는 공간',
   },
   en: {
@@ -25,7 +24,7 @@ const copy = {
     title: 'A small space\nfor today’s mood.',
     intro: 'Choose delicate stickers, arrange them at your pace, and make a scene that feels like yours. No account required.',
     start: 'Start creating', explore: 'Explore themes', themesTitle: 'Where would you like to stay?',
-    themesIntro: 'Start with the greenhouse or café. More scenes and difficulty-specific stickers are in preparation.',
+    themesIntro: 'Start with the greenhouse or café. More scenes with 75+ detailed stickers per set are in preparation.',
     method: 'Easy from the first sticker', features: 'Made for quiet focus', about: 'Why we make small spaces',
   },
 };
@@ -39,17 +38,10 @@ const sets = [
   { id: 'reading-room', theme: 'room', title: { ko: '포근한 독서방', en: 'Cozy Reading Room' }, subtitle: { ko: '조용한 문장과 따뜻한 조명', en: 'Quiet pages and warm light' }, image: '/assets/diorama/rainy-night-cafe/example-scene.jpg', ready: false },
 ] as const;
 
-const levels: Array<{ id: Difficulty; ko: string; en: string; count: string; detailKo: string; detailEn: string }> = [
-  { id: 'beginner', ko: '초급', en: 'Beginner', count: '≤ 25', detailKo: '완성형 오브젝트', detailEn: 'Grouped objects' },
-  { id: 'intermediate', ko: '중급', en: 'Intermediate', count: '≤ 50', detailKo: '부분별로 구성', detailEn: 'Sectioned objects' },
-  { id: 'advanced', ko: '고급', en: 'Advanced', count: '≤ 100', detailKo: '일부 소품까지 개별', detailEn: 'Fine individual pieces' },
-];
-
 export default function ServiceApp({ initialPath }: { initialPath?: string }) {
   const path = initialPath || (typeof window !== 'undefined' ? window.location.pathname : '/');
   const { locale, page } = parsePath(path);
   const [selectedSet, setSelectedSet] = useState<ThemeId>('glasshouse-botanist');
-  const [difficulty, setDifficulty] = useState<Difficulty>('beginner');
   const [adPreview, setAdPreview] = useState(false);
   useEffect(() => {
     setAdPreview(new URLSearchParams(window.location.search).get('ad-preview') === '1');
@@ -73,7 +65,7 @@ export default function ServiceApp({ initialPath }: { initialPath?: string }) {
     const shelfPilot = theme === 'glasshouse-botanist' && query.get('pilot') === 'shelf';
     const workbenchPilot = theme === 'glasshouse-botanist' && query.get('pilot') === 'workbench';
     const combinedPilot = theme === 'glasshouse-botanist' && query.get('pilot') === 'combined';
-    return <StickerbookPage initialThemeId={theme} locale={locale} shelfPilot={shelfPilot} workbenchPilot={workbenchPilot} combinedPilot={combinedPilot} difficulty={shelfPilot || workbenchPilot || combinedPilot ? 'intermediate' : 'beginner'} onExit={() => window.location.assign(href('themes'))} />;
+    return <StickerbookPage initialThemeId={theme} locale={locale} shelfPilot={shelfPilot} workbenchPilot={workbenchPilot} combinedPilot={combinedPilot} onExit={() => window.location.assign(href('themes'))} />;
   }
 
   const article = page === 'how-to' || page === 'features' || page === 'about' ? articles[locale][page] : page === 'privacy' || page === 'terms' ? legalArticles[locale][page] : null;
@@ -117,9 +109,9 @@ export default function ServiceApp({ initialPath }: { initialPath?: string }) {
         <img src={set.image} alt="" /><span className="set-card-copy"><b>{set.title[locale]}</b><small>{set.subtitle[locale]}</small>{!set.ready && <em>{ko ? '준비 중 · 참고 이미지' : 'Coming soon · Reference image'}</em>}</span>{selectedSet === set.id && <Check className="selected-check" size={18}/>}
       </button>)}</section>
       <aside className="selection-panel"><img src={sets.find(set => set.id === selectedSet)?.image} alt=""/><p className="eyebrow">SELECTED SET</p><h2>{sets.find(set => set.id === selectedSet)?.title[locale]}</h2>
-        <p>{ko ? '난이도별 구성은 준비 중입니다.' : 'Difficulty variants are in preparation.'}</p>
-        <div className="level-list">{levels.map(level => <button key={level.id} disabled={level.id !== 'beginner'} className={difficulty === level.id ? 'active' : ''} onClick={() => setDifficulty(level.id)}><span><b>{ko ? level.ko : level.en}{level.id !== 'beginner' && (ko ? ' · 준비 중' : ' · Soon')}</b><small>{ko ? level.detailKo : level.detailEn}</small></span><em>{level.count}</em></button>)}</div>
-        <p className="performance-note">{ko ? '현재는 기존 스티커 구성으로 체험합니다. 단계별 수량과 분해 기능은 출시 전 성능 검증 후 확정합니다.' : 'Try the current sticker collection. Level limits and object splitting will be finalized after testing.'}</p>
+        <p>{ko ? '모든 세트는 세밀하게 나뉜 스티커로 구성합니다.' : 'Every set is built from finely separated stickers.'}</p>
+        <div className="set-format-card"><span><b>{ko ? '상세 스티커 구성' : 'Detailed sticker set'}</b><small>{ko ? '개별 오브젝트와 소품을 자유롭게 배치' : 'Arrange individual objects and decorations'}</small></span><em>{ko ? '출시 세트 75개 이상' : '75+ in release sets'}</em></div>
+        <p className="performance-note">{ko ? '현재 공개된 세트는 기능 체험용 기존 구성입니다. 75개 이상의 완성 콘텐츠는 제작 및 성능 검증 후 적용합니다.' : 'Current sets use the existing preview collection. Complete sets with 75+ stickers will follow content production and performance testing.'}</p>
         <a className="primary-button full" href={href('studio') + '?set=' + selectedSet}>{ko ? '이 세트로 시작' : 'Start this set'}<ArrowRight size={17}/></a>
         <a className="panel-help" href={href('how-to')}>{ko ? '처음이라면 이용방법 보기 →' : 'Read the illustrated guide →'}</a>
       </aside></div>

@@ -22,7 +22,7 @@ const assets: Asset[] = groups.flatMap(group => group.manifest.assets.map(asset 
 export const GLASSHOUSE_COMBINED_PILOT: ContentSet = {
   ...GLASSHOUSE_BOTANIST_MANIFEST, setId, version: 1, published: false,
   title: {
-    ko: '온실 공방 · 중급 통합 시제품 9종',
+    ko: '온실 공방 · 통합 시제품 9종',
     en: 'Greenhouse workshop · 9-piece pilot',
     ja: 'Greenhouse workshop pilot', zh: 'Greenhouse workshop pilot', es: 'Greenhouse workshop pilot',
   },

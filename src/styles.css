@@ -93,6 +93,10 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(89,109,80,.2
 .level-list button { min-height:64px; display:flex; align-items:center; justify-content:space-between; padding:11px 13px; border:1px solid var(--line); border-radius:11px; text-align:left; background:white; cursor:pointer; }
 .level-list button.active { border-color:var(--sage); background:#f1f4ed; box-shadow:0 0 0 1px var(--sage); }
 .level-list span { display:grid; gap:4px; }.level-list small{color:var(--muted)}.level-list em{font-style:normal;color:var(--sage);font-weight:700}.performance-note{display:block;color:#888d84;line-height:1.5}.primary-button.full{width:100%;margin-top:18px}
+.set-format-card { display:grid; gap:8px; margin:18px 0 12px; padding:14px; border:1px solid var(--sage); border-radius:11px; background:#f1f4ed; }
+.set-format-card span { display:grid; gap:4px; }
+.set-format-card small { color:var(--muted); }
+.set-format-card em { font-style:normal; color:var(--sage); font-weight:700; }
 
 .studio-shell { display:flex; flex-direction:column; width:100vw; height:100vh; overflow:hidden; background:#eeeee8; color:var(--ink); }
 .studio-service-bar { height:34px; flex-shrink:0; display:flex; align-items:center; gap:12px; padding:0 16px; background:var(--paper); border-bottom:1px solid var(--line); }
@@ -215,6 +219,7 @@ button:disabled { opacity:.48; cursor:not-allowed; }
 .drawer-grid button { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:0; min-height:110px; border:1px solid var(--line); border-radius:12px; background:white; padding:10px; gap:9px; cursor:grab; }
 .drawer-grid img { width:86px; height:67px; max-width:100%; object-fit:contain; }
 .drawer-grid span { font-size:11px; line-height:1.45; }
+.drawer-grid .drawer-empty { grid-column:1/-1; align-self:start; margin:8px; padding:22px 14px; border:1px dashed var(--line); border-radius:12px; color:var(--muted); font-size:13px; line-height:1.6; text-align:center; }
 .sound-panel { z-index:200; }
 .track-item { display:flex; align-items:center; padding:8px; gap:5px; border:1px solid var(--line); border-radius:12px; background:white; }
 .track-item.selected { border-color:var(--sage); background:#f3f6ef; }

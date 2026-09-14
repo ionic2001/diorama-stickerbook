@@ -21,7 +21,7 @@ const assets: Asset[] = entries.map(([id, ko, en, width, height, x, y], index) =
 export const GLASSHOUSE_SHELF_PILOT: ContentSet = {
   ...GLASSHOUSE_BOTANIST_MANIFEST,
   setId, version: 1, published: false,
-  title: { ko: '온실 선반 · 중급 시제품 4종', en: 'Greenhouse shelf · 4-piece pilot', ja: 'Shelf pilot', zh: 'Shelf pilot', es: 'Shelf pilot' },
+  title: { ko: '온실 선반 · 시제품 4종', en: 'Greenhouse shelf · 4-piece pilot', ja: 'Shelf pilot', zh: 'Shelf pilot', es: 'Shelf pilot' },
   assets, assetIds: assets.map(asset => asset.assetId),
   defaultCreation: {
     sceneState: { lampOn: false },

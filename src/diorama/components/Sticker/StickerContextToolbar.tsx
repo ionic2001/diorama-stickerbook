@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDown, ArrowUp, Copy, FlipHorizontal, Lock, RotateCcw, RotateCw, Trash2, Unlock } from 'lucide-react';
+import { ArrowDown, ArrowUp, FlipHorizontal, Lock, RotateCcw, RotateCw, Trash2, Unlock } from 'lucide-react';
 import { PlacedSticker } from '../../types/manifest';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   onBringToFront: () => void; onBringForward: () => void;
   onSendBackward: () => void; onSendToBack: () => void;
   onFlipX: () => void; onToggleLock: () => void;
-  onDuplicate: () => void; onDelete: () => void;
+  onDelete: () => void;
   onRotate: (degrees: number) => void; onScale: (scale: number) => void;
 }
 
@@ -26,7 +26,6 @@ export function StickerContextToolbar(p: Props) {
       <button disabled={p.sticker.locked} onClick={p.onSendToBack}>맨 뒤</button>
       <button disabled={p.sticker.locked} onClick={p.onFlipX} title="좌우 반전" aria-label="좌우 반전"><FlipHorizontal size={17} /></button>
       <button onClick={p.onToggleLock} title={p.sticker.locked ? '잠금 해제' : '잠금'} aria-label={p.sticker.locked ? '잠금 해제' : '잠금'}>{p.sticker.locked ? <Lock size={17} /> : <Unlock size={17} />}</button>
-      <button onClick={p.onDuplicate} title="복제" aria-label="복제"><Copy size={17} /></button>
       <button onClick={p.onDelete} title="삭제" aria-label="삭제"><Trash2 size={17} /></button>
     </div>
   </div>;

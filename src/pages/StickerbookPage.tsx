@@ -37,7 +37,6 @@ interface StickerbookPageProps {
   combinedPilot?: boolean;
   initialThemeId?: 'glasshouse-botanist' | 'rainy-night-cafe';
   locale?: 'ko' | 'en';
-  difficulty?: 'beginner' | 'intermediate' | 'advanced';
   onExit?: () => void;
 }
 
@@ -45,7 +44,7 @@ function readPreference(key: string): string | null {
   try { return localStorage.getItem(key); } catch { return null; }
 }
 
-export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId = 'glasshouse-botanist', locale = 'ko', difficulty = 'beginner', onExit, shelfPilot = false, workbenchPilot = false, combinedPilot = false }) => {
+export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId = 'glasshouse-botanist', locale = 'ko', onExit, shelfPilot = false, workbenchPilot = false, combinedPilot = false }) => {
   const greenhouseManifest = combinedPilot ? GLASSHOUSE_COMBINED_PILOT : workbenchPilot ? GLASSHOUSE_WORKBENCH_PILOT : shelfPilot ? GLASSHOUSE_SHELF_PILOT : GLASSHOUSE_BOTANIST_MANIFEST;
   const initialManifest = initialThemeId === 'glasshouse-botanist' ? greenhouseManifest : RAINY_NIGHT_CAFE_MANIFEST;
   const [currentThemeId, setCurrentThemeId] = useState<'glasshouse-botanist' | 'rainy-night-cafe'>(initialThemeId);
@@ -275,29 +274,7 @@ export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId
     setHistory((prev) => recordAction(prev, updated));
   };
 
-  // 7. 스티커 복제
-  const handleDuplicate = (instanceId: string) => {
-    const target = stickers.find((s) => s.instanceId === instanceId);
-    if (!target) return;
-
-    const newInstanceId = `sticker-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-    const cloned: PlacedSticker = {
-      ...target,
-      instanceId: newInstanceId,
-      x: Math.min(manifest.canvas.width - 60, target.x + 25),
-      y: Math.min(manifest.canvas.height - 60, target.y + 25),
-      zIndex: Math.max(...stickers.map((s) => s.zIndex), 0) + 10,
-      locked: false,
-    };
-
-    const updated = normalizeZIndexes([...stickers, cloned]);
-    setStickers(updated);
-    setSelectedInstanceId(newInstanceId);
-    setHistory((prev) => recordAction(prev, updated));
-    audioManager.playStickerPop();
-  };
-
-  // 8. 스티커 삭제
+  // 7. 스티커 삭제
   const handleDelete = (instanceId: string) => {
     const updated = normalizeZIndexes(stickers.filter((s) => s.instanceId !== instanceId));
     setStickers(updated);
@@ -307,10 +284,10 @@ export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId
     setHistory((prev) => recordAction(prev, updated));
   };
 
-  // 9. 신규 스티커 추가 (트레이 클릭 또는 드롭)
+  // 8. 신규 스티커 추가 (한 자산은 작품에 한 번만 배치)
   const handleAddSticker = (assetId: string, customX?: number, customY?: number) => {
     const asset = manifest.assets.find((a) => a.assetId === assetId);
-    if (!asset) return;
+    if (!asset || stickers.some((sticker) => sticker.assetId === assetId)) return;
 
     const newInstanceId = `sticker-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const newSticker: PlacedSticker = {
@@ -398,7 +375,7 @@ export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId
 
   return (
     <div className="studio-shell">
-      <div className="studio-service-bar"><button onClick={onExit}>← {locale === 'ko' ? '테마로' : 'Themes'}</button><span>{locale === 'ko' ? ({ beginner: '초급', intermediate: '중급', advanced: '고급' }[difficulty]) : difficulty}</span><small>{locale === 'ko' ? '작품은 이 기기에 저장됩니다' : 'Saved on this device'}</small></div>
+      <div className="studio-service-bar"><button onClick={onExit}>← {locale === 'ko' ? '테마로' : 'Themes'}</button><span>{locale === 'ko' ? '상세 스티커 구성' : 'Detailed sticker set'}</span><small>{locale === 'ko' ? '작품은 이 기기에 저장됩니다' : 'Saved on this device'}</small></div>
       {/* 1. 상단 글로벌 툴바 */}
       <TopToolbar
         title={manifest.title[locale]}
@@ -457,7 +434,6 @@ export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId
             onSendToBack={handleSendToBack}
             onFlipX={handleFlipX}
             onToggleLock={handleToggleLock}
-            onDuplicate={handleDuplicate}
             onDelete={handleDelete}
             onToggleLamp={handleToggleLamp}
             onDropNewSticker={(assetId, x, y) => handleAddSticker(assetId, x, y)}
@@ -469,7 +445,7 @@ export const StickerbookPage: React.FC<StickerbookPageProps> = ({ initialThemeId
           <StickerTray
             locale={locale}
             isOpen={isTrayOpen}
-            assets={manifest.assets}
+            assets={manifest.assets.filter(asset => !stickers.some(sticker => sticker.assetId === asset.assetId))}
             onToggleOpen={() => setIsTrayOpen((prev) => !prev)}
             onAddSticker={(assetId) => handleAddSticker(assetId)}
           />

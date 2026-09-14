@@ -25,7 +25,6 @@ interface DioramaCanvasProps {
   onSendToBack: (instanceId: string) => void;
   onFlipX: (instanceId: string) => void;
   onToggleLock: (instanceId: string) => void;
-  onDuplicate: (instanceId: string) => void;
   onDelete: (instanceId: string) => void;
   onToggleLamp: () => void;
   onDropNewSticker?: (assetId: string, x: number, y: number) => void;
@@ -53,7 +52,6 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
   onSendToBack,
   onFlipX,
   onToggleLock,
-  onDuplicate,
   onDelete,
   onToggleLamp,
   onDropNewSticker,
@@ -225,7 +223,6 @@ export const DioramaCanvas: React.FC<DioramaCanvasProps> = ({
             onSendToBack={() => onSendToBack(selectedSticker.instanceId)}
             onFlipX={() => onFlipX(selectedSticker.instanceId)}
             onToggleLock={() => onToggleLock(selectedSticker.instanceId)}
-            onDuplicate={() => onDuplicate(selectedSticker.instanceId)}
             onDelete={() => onDelete(selectedSticker.instanceId)}
           />
         )}
